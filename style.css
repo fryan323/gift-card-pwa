@@ -1,12 +1,18 @@
-/* Base */
 body {
   font-family: -apple-system, BlinkMacSystemFont, sans-serif;
   margin: 0;
   background: #f2f2f7;
+  height: 100vh;
+  overflow: hidden; /* ✅ prevents whole page scroll */
 }
 
-/* Header */
+/* ✅ STICKY HEADER */
 .header {
+  position: fixed;
+  top: 0;
+  width: 100%;
+  z-index: 10;
+
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -28,6 +34,17 @@ body {
   color: #007aff;
 }
 
+/* ✅ SCROLLABLE CONTENT */
+#card-list {
+  position: absolute;
+  top: 140px;
+  bottom: 80px;
+  left: 0;
+  right: 0;
+  overflow-y: auto;
+  padding-bottom: 20px;
+}
+
 /* Inputs */
 input, select {
   width: calc(100% - 24px);
@@ -39,8 +56,12 @@ input, select {
   background: white;
 }
 
-/* Filters */
 .filters {
+  position: fixed;
+  top: 90px;
+  width: 100%;
+  background: #f2f2f7;
+  z-index: 5;
   display: flex;
   justify-content: space-between;
   padding: 8px 12px;
@@ -60,14 +81,12 @@ input, select {
   opacity: 0.65;
 }
 
-/* Card row layout */
 .card-row {
   display: flex;
   align-items: center;
   gap: 12px;
 }
 
-/* Icon */
 .card-icon {
   width: 36px;
   height: 36px;
@@ -76,47 +95,37 @@ input, select {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 18px;
 }
 
-/* Text layout */
 .card-info {
   flex: 1;
 }
 
-/* Title */
 .title {
   font-size: 16px;
   font-weight: 600;
 }
 
-/* Subtitle */
 .subtitle {
   font-size: 14px;
   color: #555;
-  margin-top: 2px;
 }
 
-/* Discount line */
 .discount {
   font-size: 12px;
   color: gray;
-  margin-top: 2px;
 }
 
-/* Badge */
 .badge {
   font-size: 10px;
   background: #e5e5ea;
   padding: 2px 6px;
   border-radius: 10px;
-  margin-left: 6px;
 }
 
-/* Copy buttons (RIGHT SIDE) */
 .copy-container {
   display: flex;
-  flex-direction: row;   /* side-by-side */
+  flex-direction: row;
   gap: 6px;
 }
 
@@ -126,7 +135,6 @@ input, select {
   border-radius: 8px;
   height: 36px;
   width: 50px;
-  font-size: 12px;
 }
 
 /* Modal */
@@ -157,15 +165,6 @@ input, select {
   border: none;
 }
 
-.modal-content button:first-of-type {
-  background: #007aff;
-  color: white;
-}
-
-.modal-content button:last-of-type {
-  background: #e5e5ea;
-}
-
 /* Tab bar */
 .tabbar {
   position: fixed;
@@ -176,6 +175,7 @@ input, select {
   justify-content: space-around;
   padding: 10px;
   border-top: 1px solid #ddd;
+  z-index: 10;
 }
 
 .tabbar button {
@@ -184,9 +184,6 @@ input, select {
   font-size: 21px;
   padding: 12px 20px;
   color: #007aff;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
 }
 
 /* Toast */
@@ -202,7 +199,6 @@ input, select {
   display: none;
 }
 
-/* Hidden */
 .hidden {
   display: none;
 }
