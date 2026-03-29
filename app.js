@@ -209,9 +209,9 @@ function copyCode(codeValue) {
   showToast("Copied code");
 }
 
+/* EXPORT */
 function exportData() {
   const dataStr = JSON.stringify(cards, null, 2);
-
   const blob = new Blob([dataStr], { type: "text/plain" });
   const url = URL.createObjectURL(blob);
 
@@ -221,35 +221,132 @@ function exportData() {
   a.click();
 
   URL.revokeObjectURL(url);
-
   showToast("Exported cards");
 }
 
-document.getElementById("importFile").addEventListener("change", function(e) {
-  const file = e.target.files[0];
-  if (!file) return;
+/* OCR + IMPORT (FIXED) */
+document.addEventListener("DOMContentLoaded", function() {
 
-  const reader = new FileReader();
+  const photoInput = document.getElementById("photoInput");
+  if (photoInput) {
+    photoInput.addEventListener("change", async function(e) {
+      const file = e.target.files[0];
+      if (!file) return;
 
-  reader.onload = function(event) {
-    try {
-      const imported = JSON.parse(event.target.result);
+      showToast("Scanning...");
 
-      if (!Array.isArray(imported)) {
-        throw new Error("Invalid format");
+      try {
+        const result = await Tesseract.recognize(file, 'eng');
+        const text = result.data.text;
+
+        console.log("OCR TEXT:", text);
+
+        extractFromText(text);
+
+        showToast("Populated from image");
+      } catch (err) {
+        console.error(err);
+        alert("Scan failed");
       }
+    });
+  }
 
-      cards = imported;
-      save();
-      render();
+  const importInput = document.getElementById("importFile");
+  if (importInput) {
+    importInput.addEventListener("change", function(e) {
+      const file = e.target.files[0];
+      if (!file) return;
 
-      showToast("Imported cards");
-    } catch (err) {
-      alert("Import failed: invalid file");
-    }
-  };
+      const reader = new FileReader();
 
-  reader.readAsText(file);
+      reader.onload = function(event) {
+        try {
+          const imported = JSON.parse(event.target.result);
+
+          if (!Array.isArray(imported)) throw new Error();
+
+          cards = imported;
+          save();
+          render();
+
+          showToast("Imported cards");
+        } catch {
+          alert("Import failed");
+        }
+      };
+
+      reader.readAsText(file);
+    });
+  }
+
 });
+
+/* OCR PARSER */
+function extractFromText(text) {
+  const cleaned = text.replace(/\n/g, " ");
+  const lower = cleaned.toLowerCase();
+
+  // LEGO
+  if (lower.includes("lego")) {
+    retailerSelect.value = "LEGO";
+
+    const cardMatch = cleaned.match(/(\d{4}\s?\d{4}\s?\d{4}\s?\d{4}\s?\d{3})/);
+    if (cardMatch) cardNumber.value = cardMatch[0].replace(/\s/g, "");
+
+    const pinMatch = cleaned.match(/pin[:\s]*([0-9]{4,8})/i);
+    if (pinMatch) code.value = pinMatch[1];
+
+    const balanceMatch = cleaned.match(/\$?\d+\.\d{2}/);
+    if (balanceMatch) balance.value = balanceMatch[0].replace("$","");
+
+    return;
+  }
+
+  // TARGET
+  if (lower.includes("target")) {
+    retailerSelect.value = "Target";
+
+    const cardMatch = cleaned.match(/gift\s*card\s*number[:\s]*([0-9]{12,20})/i);
+    if (cardMatch) cardNumber.value = cardMatch[1];
+
+    let accessMatch = cleaned.match(/access\s*number[:\s]*([0-9]{4,12})/i);
+    if (!accessMatch) accessMatch = cleaned.match(/access.*?([0-9]{6,12})/i);
+
+    if (accessMatch) code.value = accessMatch[1];
+
+    const balanceMatch = cleaned.match(/\$?\d+\.\d{2}/);
+    if (balanceMatch) balance.value = balanceMatch[0].replace("$","");
+
+    return;
+  }
+
+  // KOHLS
+  if (
+    lower.includes("card number") &&
+    lower.includes("pin") &&
+    cleaned.match(/\d{4}\s\d{5}\s\d{5}\s\d{5}/)
+  ) {
+    retailerSelect.value = "Kohls";
+    customRetailer.classList.add("hidden");
+
+    const cardMatch = cleaned.match(/(\d{4}\s\d{5}\s\d{5}\s\d{5})/);
+    if (cardMatch) cardNumber.value = cardMatch[0].replace(/\s/g, "");
+
+    const pinMatch = cleaned.match(/pin[:\s]*([0-9]{4,8})/i);
+    if (pinMatch) code.value = pinMatch[1];
+
+    const balanceMatch = cleaned.match(/\$?\d+\.\d{2}/);
+    if (balanceMatch) balance.value = balanceMatch[0].replace("$","");
+
+    return;
+  }
+
+  // GENERIC
+  const numbers = cleaned.match(/\d{8,}/g);
+  if (numbers) cardNumber.value = numbers.sort((a,b)=>b.length-a.length)[0];
+
+  const balanceMatch = cleaned.match(/\$?\d+\.\d{2}/);
+  if (balanceMatch) balance.value = balanceMatch[0].replace("$","");
+}
 
 render();
