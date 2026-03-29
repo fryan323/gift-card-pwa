@@ -111,6 +111,9 @@ input, select {
 /* Actions */
 .actions {
   margin-top: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
 }
 
 /* Modal */
