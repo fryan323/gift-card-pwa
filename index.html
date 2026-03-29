@@ -9,7 +9,6 @@
 
 <body>
 
-  <!-- HEADER -->
   <div class="header">
     <h1>Gift Cards</h1>
     <button onclick="openForm()">＋</button>
@@ -24,10 +23,8 @@
     </button>
   </div>
 
-  <!-- SEARCH -->
   <input id="search" placeholder="Search..." oninput="render()">
 
-  <!-- FILTERS -->
   <div class="filters">
     <select id="sort" onchange="render()">
       <option value="default">Added Order</option>
@@ -42,13 +39,9 @@
     </label>
   </div>
 
-  <!-- CARD LIST -->
   <div id="card-list"></div>
-
-  <!-- TOTALS -->
   <div id="totals-view" class="hidden"></div>
 
-  <!-- TAB BAR -->
   <div class="tabbar">
     <button onclick="showTab('cards')">Cards</button>
     <button onclick="showTab('totals')">Totals</button>
@@ -58,9 +51,8 @@
   <div id="modal">
     <div class="modal-content">
 
-      <h2>Add Card</h2>
+      <h2>Add / Edit Card</h2>
 
-      <!-- OCR BUTTON -->
       <input type="file" id="photoInput" accept="image/*" hidden>
       <button onclick="document.getElementById('photoInput').click()">
         📷 Populate from Screenshot
@@ -88,18 +80,23 @@
 
       <button onclick="saveCard()">Save</button>
       <button onclick="closeForm()">Cancel</button>
+
+      <!-- CHECK BALANCE -->
+      <button id="checkBalanceBtn" onclick="checkBalanceFromModal()">
+        Check Balance
+      </button>
+
+      <!-- DELETE -->
       <button id="deleteBtn" onclick="deleteCurrentCard()" style="display:none; background:red; color:white;">
         Delete Card
       </button>
+
     </div>
   </div>
 
-  <!-- TOAST -->
   <div id="toast"></div>
 
-  <!-- OCR LIBRARY -->
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
-
   <script src="app.js"></script>
 </body>
 </html>
