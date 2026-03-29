@@ -71,34 +71,30 @@ function renderCards() {
   if (sort === "alpha") filtered.sort((a,b)=>a.retailer.localeCompare(b.retailer));
 
   list.innerHTML = filtered.map(c => `
-  <div class="card ${c.balance==0?'used':''}">
-    
-    <div class="card-row">
+    <div class="card ${c.balance==0?'used':''}">
+      
+      <div class="card-row">
+        <div class="card-icon">💳</div>
 
-      <div class="card-icon">
-        💳
-      </div>
+        <div class="card-info">
+          <div class="title">
+            ${c.retailer} •••• ${c.cardNumber.slice(-4)}
+          </div>
 
-      <div class="card-info">
-        <div class="title">
-          ${c.retailer} •••• ${c.cardNumber.slice(-4)}
-        </div>
-
-        <div class="subtitle">
-          Balance: $${c.balance.toFixed(2)}
-          ${c.balance==0?'<span class="badge">Used</span>':''}
+          <div class="subtitle">
+            Balance: $${c.balance.toFixed(2)}
+            ${c.balance==0?'<span class="badge">Used</span>':''}
+          </div>
         </div>
       </div>
 
-    </div>
+      <div class="actions">
+        <button onclick="editCard('${c.id}')">Edit</button>
+        <button onclick="deleteCard('${c.id}')">Delete</button>
+      </div>
 
-    <div class="actions">
-      <button onclick="editCard('${c.id}')">Edit</button>
-      <button onclick="deleteCard('${c.id}')">Delete</button>
     </div>
-
-  </div>
-`).join("");
+  `).join("");
 }
 
 function renderTotals() {
@@ -154,7 +150,6 @@ function saveCard() {
     return;
   }
 
-  // Only check duplicates when adding
   if (!editingId && isDuplicate(card)) {
     alert("Duplicate card");
     return;
@@ -199,6 +194,47 @@ function deleteCard(id) {
   cards = cards.filter(c=>c.id!==id);
   save();
   render();
+}
+
+/* OCR HANDLER */
+document.getElementById("photoInput").addEventListener("change", async function(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  showToast("Scanning...");
+
+  try {
+    const result = await Tesseract.recognize(file, 'eng');
+    const text = result.data.text;
+
+    extractFromText(text);
+
+    showToast("Populated from image");
+  } catch (err) {
+    console.error(err);
+    alert("Scan failed");
+  }
+});
+
+/* OCR PARSER */
+function extractFromText(text) {
+  const cleaned = text.replace(/\n/g, " ");
+
+  const numbers = cleaned.match(/\d{8,}/g);
+  if (numbers) {
+    cardNumber.value = numbers.sort((a,b)=>b.length-a.length)[0];
+  }
+
+  const balanceMatch = cleaned.match(/\$?\d+\.\d{2}/);
+  if (balanceMatch) {
+    balance.value = balanceMatch[0].replace("$","");
+  }
+
+  const lower = cleaned.toLowerCase();
+
+  if (lower.includes("target")) retailerSelect.value = "Target";
+  else if (lower.includes("walmart")) retailerSelect.value = "Walmart";
+  else if (lower.includes("lego")) retailerSelect.value = "LEGO";
 }
 
 render();
