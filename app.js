@@ -248,12 +248,11 @@ function extractFromText(text) {
   }
 
   // -----------------------------
-  // TARGET (FIXED)
+  // TARGET
   // -----------------------------
   if (lower.includes("target")) {
     retailerSelect.value = "Target";
 
-    // CARD NUMBER
     const cardMatch = cleaned.match(/gift\s*card\s*number[:\s]*([0-9]{12,20})/i);
     if (cardMatch) {
       cardNumber.value = cardMatch[1];
@@ -267,7 +266,6 @@ function extractFromText(text) {
       }
     }
 
-    // ACCESS CODE (ROBUST)
     let accessMatch = cleaned.match(/access\s*number[:\s]*([0-9]{4,12})/i);
 
     if (!accessMatch) {
@@ -284,6 +282,36 @@ function extractFromText(text) {
       }
     } else {
       code.value = accessMatch[1];
+    }
+
+    const balanceMatch = cleaned.match(/\$?\d+\.\d{2}/);
+    if (balanceMatch) {
+      balance.value = balanceMatch[0].replace("$","");
+    }
+
+    return;
+  }
+
+  // -----------------------------
+  // KOHLS
+  // -----------------------------
+  if (
+    lower.includes("card number") &&
+    lower.includes("pin") &&
+    cleaned.match(/\d{4}\s\d{5}\s\d{5}\s\d{5}/)
+  ) {
+    retailerSelect.value = "Other…";
+    customRetailer.value = "Kohls";
+    customRetailer.classList.remove("hidden");
+
+    const cardMatch = cleaned.match(/(\d{4}\s\d{5}\s\d{5}\s\d{5})/);
+    if (cardMatch) {
+      cardNumber.value = cardMatch[0].replace(/\s/g, "");
+    }
+
+    const pinMatch = cleaned.match(/pin[:\s]*([0-9]{4,8})/i);
+    if (pinMatch) {
+      code.value = pinMatch[1];
     }
 
     const balanceMatch = cleaned.match(/\$?\d+\.\d{2}/);
