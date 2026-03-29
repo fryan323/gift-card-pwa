@@ -136,3 +136,45 @@ input, select {
 .hidden {
   display: none;
 }
+/* Row layout */
+.card-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Icon (replaces logos) */
+.card-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: #e5e5ea;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+}
+
+/* Text layout */
+.card-info {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Title */
+.title {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+/* Subtitle */
+.subtitle {
+  font-size: 14px;
+  color: #555;
+  margin-top: 2px;
+}
+
+/* Actions spacing */
+.actions {
+  margin-top: 8px;
+}
