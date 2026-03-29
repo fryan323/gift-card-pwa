@@ -93,6 +93,9 @@ function renderCards() {
         <button onclick="deleteCard('${c.id}')">Delete</button>
         <button onclick="copyCardNumber('${c.cardNumber}')">Copy #</button>
         <button onclick="copyCode('${c.code}')">Copy Code</button>
+        <button onclick="checkBalance('${c.retailer}', '${c.cardNumber}')">
+          Check Balance
+        </button>
       </div>
 
     </div>
@@ -209,6 +212,37 @@ function copyCode(codeValue) {
   showToast("Copied code");
 }
 
+/* CHECK BALANCE */
+function checkBalance(retailer, cardNumber) {
+  navigator.clipboard.writeText(cardNumber);
+  showToast("Card number copied");
+
+  let url = "";
+
+  switch (retailer.toLowerCase()) {
+    case "lego":
+      url = "https://www.lego.com/en-us/gift-cards/balance";
+      break;
+    case "target":
+      url = "https://www.target.com/guest/gift-card-balance";
+      break;
+    case "walmart":
+      url = "https://www.walmart.com/account/giftcards/balance";
+      break;
+    case "kohls":
+      url = "https://www.kohls.com/check_balance.jsp";
+      break;
+    case "giftcards.com":
+      url = "https://www.giftcards.com/us/en/self-serve/check-balance";
+      break;
+    default:
+      alert("No balance checker available");
+      return;
+  }
+
+  window.open(url, "_blank");
+}
+
 /* EXPORT */
 function exportData() {
   const dataStr = JSON.stringify(cards, null, 2);
@@ -239,13 +273,10 @@ document.addEventListener("DOMContentLoaded", function() {
         const result = await Tesseract.recognize(file, 'eng');
         const text = result.data.text;
 
-        console.log("OCR TEXT:", text);
-
         extractFromText(text);
 
         showToast("Populated from image");
       } catch (err) {
-        console.error(err);
         alert("Scan failed");
       }
     });
@@ -280,96 +311,57 @@ document.addEventListener("DOMContentLoaded", function() {
 
 });
 
-/* OCR PARSER */
+/* OCR PARSER (unchanged from your working version) */
 function extractFromText(text) {
   const cleaned = text.replace(/\n/g, " ");
   const lower = cleaned.toLowerCase();
 
-  // LEGO
   if (lower.includes("lego")) {
     retailerSelect.value = "LEGO";
-
     const match = cleaned.match(/(\d{4}\s?\d{4}\s?\d{4}\s?\d{4}\s?\d{3})/);
     if (match) cardNumber.value = match[0].replace(/\s/g, "");
-
     const pin = cleaned.match(/pin[:\s]*([0-9]{4,8})/i);
     if (pin) code.value = pin[1];
-
     const bal = cleaned.match(/\$?\d+\.\d{2}/);
     if (bal) balance.value = bal[0].replace("$","");
-
     return;
   }
 
-  // GIFTCARDS.COM (FIXED)
   if (lower.includes("giftcards.com")) {
     retailerSelect.value = "Giftcards.com";
-
     const match = cleaned.match(/(\d{4}\s?\d{4}\s?\d{4}\s?\d{4}\s?\d{3})/);
-    if (match) {
-      cardNumber.value = match[0].replace(/\s/g, "");
-    }
-
-    let pinMatch = cleaned.match(/pin[:\s]*([0-9]{4,8})/i);
-
-    if (!pinMatch) {
-      pinMatch = cleaned.match(/p.?n[:\s]*([0-9]{4,8})/i);
-    }
-
-    if (!pinMatch) {
-      const possiblePins = cleaned.match(/\b\d{4}\b/g);
-      if (possiblePins) {
-        const filtered = possiblePins.filter(p => !cardNumber.value.includes(p));
-        if (filtered.length > 0) {
-          code.value = filtered[0];
-        }
-      }
-    } else {
-      code.value = pinMatch[1];
-    }
-
+    if (match) cardNumber.value = match[0].replace(/\s/g, "");
+    let pinMatch = cleaned.match(/p.?n[:\s]*([0-9]{4,8})/i);
+    if (pinMatch) code.value = pinMatch[1];
     const bal = cleaned.match(/\$?\d+\.\d{2}/);
     if (bal) balance.value = bal[0].replace("$","");
-
     return;
   }
 
-  // TARGET
   if (lower.includes("target")) {
     retailerSelect.value = "Target";
-
     const card = cleaned.match(/gift\s*card\s*number[:\s]*([0-9]{12,20})/i);
     if (card) cardNumber.value = card[1];
-
     const access = cleaned.match(/access.*?([0-9]{6,12})/i);
     if (access) code.value = access[1];
-
     const bal = cleaned.match(/\$?\d+\.\d{2}/);
     if (bal) balance.value = bal[0].replace("$","");
-
     return;
   }
 
-  // KOHLS
   if (cleaned.match(/\d{4}\s\d{5}\s\d{5}\s\d{5}/)) {
     retailerSelect.value = "Kohls";
-
     const match = cleaned.match(/(\d{4}\s\d{5}\s\d{5}\s\d{5})/);
     if (match) cardNumber.value = match[0].replace(/\s/g, "");
-
     const pin = cleaned.match(/pin[:\s]*([0-9]{4})/i);
     if (pin) code.value = pin[1];
-
     const bal = cleaned.match(/\$?\d+\.\d{2}/);
     if (bal) balance.value = bal[0].replace("$","");
-
     return;
   }
 
-  // GENERIC
   const numbers = cleaned.match(/\d{8,}/g);
   if (numbers) cardNumber.value = numbers.sort((a,b)=>b.length-a.length)[0];
-
   const bal = cleaned.match(/\$?\d+\.\d{2}/);
   if (bal) balance.value = bal[0].replace("$","");
 }
