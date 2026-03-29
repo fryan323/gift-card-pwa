@@ -21,6 +21,28 @@ function getRetailer() {
   return retailerSelect.value === "Other…" ? customRetailer.value : retailerSelect.value;
 }
 
+/* ✅ DUPLICATE LOGIC (RESTORED) */
+function normalize(s) {
+  return s.trim().toLowerCase();
+}
+
+function normalizeNumber(s) {
+  return s.replace(/\D/g,'');
+}
+
+function normalizeCode(s) {
+  return s.trim().toLowerCase().replace(/\s/g,'');
+}
+
+function isDuplicate(card, excludeId=null) {
+  return cards.some(c =>
+    c.id !== excludeId &&
+    normalize(c.retailer) === normalize(card.retailer) &&
+    normalizeNumber(c.cardNumber) === normalizeNumber(card.cardNumber) &&
+    normalizeCode(c.code) === normalizeCode(card.code)
+  );
+}
+
 function render() {
   if (currentTab === "cards") renderCards();
   else renderTotals();
@@ -104,6 +126,17 @@ function saveCard() {
     balance: parseFloat(balance.value)||0
   };
 
+  if (!card.retailer || !card.cardNumber || !card.code) {
+    alert("Missing required fields");
+    return;
+  }
+
+  /* ✅ DUPLICATE CHECK ONLY ON ADD */
+  if (!editingId && isDuplicate(card)) {
+    alert("Duplicate card");
+    return;
+  }
+
   if (editingId) {
     cards = cards.map(c => c.id === editingId ? card : c);
   } else {
@@ -130,12 +163,11 @@ function editCard(id) {
   modal.classList.add("show");
 }
 
-/* ✅ DELETE CONFIRMATION */
+/* DELETE CONFIRMATION */
 function deleteCurrentCard() {
   if (!editingId) return;
 
-  const confirmDelete = confirm("Are you sure you want to delete this card?");
-  if (!confirmDelete) return;
+  if (!confirm("Are you sure you want to delete this card?")) return;
 
   cards = cards.filter(c=>c.id!==editingId);
   save();
@@ -155,7 +187,7 @@ function copyCode(c) {
   showToast("Copied code");
 }
 
-/* CHECK BALANCE (FROM MODAL) */
+/* CHECK BALANCE */
 function checkBalanceFromModal() {
   const retailer = getRetailer();
   const number = cardNumber.value;
@@ -197,7 +229,7 @@ function exportData() {
   showToast("Exported cards");
 }
 
-/* ✅ FIXED OCR HANDLER */
+/* OCR HANDLER */
 document.addEventListener("DOMContentLoaded", function() {
 
   const photoInput = document.getElementById("photoInput");
@@ -227,7 +259,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
 });
 
-/* OCR PARSER (UNCHANGED + WORKING) */
+/* OCR PARSER */
 function extractFromText(text) {
   const cleaned = text.replace(/\n/g, " ");
   const lower = cleaned.toLowerCase();
