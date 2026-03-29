@@ -36,7 +36,7 @@
   <!-- CARD LIST -->
   <div id="card-list"></div>
 
-  <!-- TOTALS TAB -->
+  <!-- TOTALS -->
   <div id="totals-view" class="hidden"></div>
 
   <!-- TAB BAR -->
@@ -46,9 +46,16 @@
   </div>
 
   <!-- MODAL -->
-  <div id="modal" class="hidden">
+  <div id="modal">
     <div class="modal-content">
-      <h2 id="form-title">Add Card</h2>
+
+      <h2>Add Card</h2>
+
+      <!-- OCR BUTTON -->
+      <input type="file" id="photoInput" accept="image/*" hidden>
+      <button onclick="document.getElementById('photoInput').click()">
+        📷 Populate from Screenshot
+      </button>
 
       <select id="retailerSelect" onchange="toggleOther()">
         <option>Target</option>
@@ -71,11 +78,15 @@
 
       <button onclick="saveCard()">Save</button>
       <button onclick="closeForm()">Cancel</button>
+
     </div>
   </div>
 
   <!-- TOAST -->
   <div id="toast"></div>
+
+  <!-- OCR LIBRARY -->
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 
   <script src="app.js"></script>
 </body>
