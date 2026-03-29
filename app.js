@@ -53,7 +53,6 @@ function renderCards() {
     </div>
   `).join("");
 
-  // ✅ FIXED CLICK HANDLER
   document.querySelectorAll(".card").forEach(el => {
     el.addEventListener("click", function() {
       editCard(this.dataset.id);
@@ -87,6 +86,7 @@ function openForm() {
   balance.value = "";
 
   deleteBtn.style.display = "none";
+
   modal.classList.add("show");
 }
 
@@ -130,13 +130,21 @@ function editCard(id) {
   modal.classList.add("show");
 }
 
+/* ✅ DELETE CONFIRMATION */
 function deleteCurrentCard() {
+  if (!editingId) return;
+
+  const confirmDelete = confirm("Are you sure you want to delete this card?");
+  if (!confirmDelete) return;
+
   cards = cards.filter(c=>c.id!==editingId);
   save();
   closeForm();
   render();
+  showToast("Deleted");
 }
 
+/* COPY */
 function copyCardNumber(n) {
   navigator.clipboard.writeText(n);
   showToast("Copied card number");
@@ -147,6 +155,7 @@ function copyCode(c) {
   showToast("Copied code");
 }
 
+/* CHECK BALANCE (FROM MODAL) */
 function checkBalanceFromModal() {
   const retailer = getRetailer();
   const number = cardNumber.value;
@@ -172,6 +181,100 @@ function checkBalanceFromModal() {
   }
 
   window.open(url, "_blank");
+}
+
+/* EXPORT */
+function exportData() {
+  const blob = new Blob([JSON.stringify(cards, null, 2)], { type: "text/plain" });
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "gift-cards-backup.txt";
+  a.click();
+
+  URL.revokeObjectURL(url);
+  showToast("Exported cards");
+}
+
+/* ✅ FIXED OCR HANDLER */
+document.addEventListener("DOMContentLoaded", function() {
+
+  const photoInput = document.getElementById("photoInput");
+
+  if (photoInput) {
+    photoInput.addEventListener("change", async function(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      showToast("Scanning...");
+
+      try {
+        const result = await Tesseract.recognize(file, 'eng');
+        const text = result.data.text;
+
+        console.log("OCR TEXT:", text);
+
+        extractFromText(text);
+
+        showToast("Populated from image");
+      } catch (err) {
+        console.error(err);
+        alert("Scan failed");
+      }
+    });
+  }
+
+});
+
+/* OCR PARSER (UNCHANGED + WORKING) */
+function extractFromText(text) {
+  const cleaned = text.replace(/\n/g, " ");
+  const lower = cleaned.toLowerCase();
+
+  if (lower.includes("lego")) {
+    retailerSelect.value = "LEGO";
+    const match = cleaned.match(/(\d{4}\s?\d{4}\s?\d{4}\s?\d{4}\s?\d{3})/);
+    if (match) cardNumber.value = match[0].replace(/\s/g, "");
+    const pin = cleaned.match(/pin[:\s]*([0-9]{4,8})/i);
+    if (pin) code.value = pin[1];
+    const bal = cleaned.match(/\$?\d+\.\d{2}/);
+    if (bal) balance.value = bal[0].replace("$","");
+    return;
+  }
+
+  if (lower.includes("giftcards.com")) {
+    retailerSelect.value = "Giftcards.com";
+    const match = cleaned.match(/(\d{4}\s?\d{4}\s?\d{4}\s?\d{4}\s?\d{3})/);
+    if (match) cardNumber.value = match[0].replace(/\s/g, "");
+    let pinMatch = cleaned.match(/p.?n[:\s]*([0-9]{4,8})/i);
+    if (pinMatch) code.value = pinMatch[1];
+    const bal = cleaned.match(/\$?\d+\.\d{2}/);
+    if (bal) balance.value = bal[0].replace("$","");
+    return;
+  }
+
+  if (lower.includes("target")) {
+    retailerSelect.value = "Target";
+    const card = cleaned.match(/gift\s*card\s*number[:\s]*([0-9]{12,20})/i);
+    if (card) cardNumber.value = card[1];
+    const access = cleaned.match(/access.*?([0-9]{6,12})/i);
+    if (access) code.value = access[1];
+    const bal = cleaned.match(/\$?\d+\.\d{2}/);
+    if (bal) balance.value = bal[0].replace("$","");
+    return;
+  }
+
+  if (cleaned.match(/\d{4}\s\d{5}\s\d{5}\s\d{5}/)) {
+    retailerSelect.value = "Kohls";
+    const match = cleaned.match(/(\d{4}\s\d{5}\s\d{5}\s\d{5})/);
+    if (match) cardNumber.value = match[0].replace(/\s/g, "");
+    const pin = cleaned.match(/pin[:\s]*([0-9]{4})/i);
+    if (pin) code.value = pin[1];
+    const bal = cleaned.match(/\$?\d+\.\d{2}/);
+    if (bal) balance.value = bal[0].replace("$","");
+    return;
+  }
 }
 
 render();
