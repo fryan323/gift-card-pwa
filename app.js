@@ -207,6 +207,8 @@ document.getElementById("photoInput").addEventListener("change", async function(
     const result = await Tesseract.recognize(file, 'eng');
     const text = result.data.text;
 
+    console.log("OCR TEXT:", text);
+
     extractFromText(text);
 
     showToast("Populated from image");
@@ -246,17 +248,16 @@ function extractFromText(text) {
   }
 
   // -----------------------------
-  // TARGET
+  // TARGET (FIXED)
   // -----------------------------
   if (lower.includes("target")) {
     retailerSelect.value = "Target";
 
-    // --- CARD NUMBER ---
+    // CARD NUMBER
     const cardMatch = cleaned.match(/gift\s*card\s*number[:\s]*([0-9]{12,20})/i);
     if (cardMatch) {
       cardNumber.value = cardMatch[1];
     } else {
-      // fallback: longest number
       const numbers = cleaned.match(/\d+/g);
       if (numbers) {
         const longest = numbers.sort((a,b)=>b.length-a.length)[0];
@@ -266,13 +267,25 @@ function extractFromText(text) {
       }
     }
 
-    // --- ACCESS CODE ---
-    const accessMatch = cleaned.match(/access\s*number[:\s]*([0-9]{4,12})/i);
-    if (accessMatch) {
+    // ACCESS CODE (ROBUST)
+    let accessMatch = cleaned.match(/access\s*number[:\s]*([0-9]{4,12})/i);
+
+    if (!accessMatch) {
+      accessMatch = cleaned.match(/access.*?([0-9]{6,12})/i);
+    }
+
+    if (!accessMatch) {
+      const numbers = cleaned.match(/\b\d{6,10}\b/g);
+      if (numbers) {
+        const filtered = numbers.filter(n => n !== cardNumber.value);
+        if (filtered.length > 0) {
+          code.value = filtered[0];
+        }
+      }
+    } else {
       code.value = accessMatch[1];
     }
 
-    // --- BALANCE ---
     const balanceMatch = cleaned.match(/\$?\d+\.\d{2}/);
     if (balanceMatch) {
       balance.value = balanceMatch[0].replace("$","");
@@ -282,7 +295,7 @@ function extractFromText(text) {
   }
 
   // -----------------------------
-  // GENERIC FALLBACK
+  // GENERIC
   // -----------------------------
   const numbers = cleaned.match(/\d{8,}/g);
   if (numbers) {
