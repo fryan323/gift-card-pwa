@@ -220,6 +220,59 @@ document.getElementById("photoInput").addEventListener("change", async function(
 function extractFromText(text) {
   const cleaned = text.replace(/\n/g, " ");
 
+  // -----------------------------
+  // LEGO-SPECIFIC LOGIC
+  // -----------------------------
+  const lower = cleaned.toLowerCase();
+
+  if (lower.includes("lego")) {
+    retailerSelect.value = "LEGO";
+
+    // --- CARD NUMBER (19 digits, allow spaces) ---
+    const cardMatch = cleaned.match(/(\d{4}\s?\d{4}\s?\d{4}\s?\d{4}\s?\d{3})/);
+
+    if (cardMatch) {
+      cardNumber.value = cardMatch[0].replace(/\s/g, "");
+    } else {
+      // fallback: grab longest number string
+      const numbers = cleaned.match(/\d+/g);
+      if (numbers) {
+        const longest = numbers.sort((a,b)=>b.length-a.length)[0];
+        if (longest.length >= 16) {
+          cardNumber.value = longest;
+        }
+      }
+    }
+
+    // --- PIN (look for PIN label) ---
+    const pinMatch = cleaned.match(/pin[:\s]*([0-9]{4,8})/i);
+
+    if (pinMatch) {
+      code.value = pinMatch[1];
+    } else {
+      // fallback: any 4-digit number NOT part of card number
+      const possiblePins = cleaned.match(/\b\d{4}\b/g);
+      if (possiblePins) {
+        const filtered = possiblePins.filter(p => !cardNumber.value.includes(p));
+        if (filtered.length > 0) {
+          code.value = filtered[0];
+        }
+      }
+    }
+
+    // --- BALANCE ---
+    const balanceMatch = cleaned.match(/\$?\d+\.\d{2}/);
+    if (balanceMatch) {
+      balance.value = balanceMatch[0].replace("$","");
+    }
+
+    return; // 🔥 STOP here if LEGO matched
+  }
+
+  // -----------------------------
+  // GENERIC FALLBACK (other cards)
+  // -----------------------------
+
   const numbers = cleaned.match(/\d{8,}/g);
   if (numbers) {
     cardNumber.value = numbers.sort((a,b)=>b.length-a.length)[0];
@@ -229,12 +282,6 @@ function extractFromText(text) {
   if (balanceMatch) {
     balance.value = balanceMatch[0].replace("$","");
   }
-
-  const lower = cleaned.toLowerCase();
-
-  if (lower.includes("target")) retailerSelect.value = "Target";
-  else if (lower.includes("walmart")) retailerSelect.value = "Walmart";
-  else if (lower.includes("lego")) retailerSelect.value = "LEGO";
 }
 
 render();
