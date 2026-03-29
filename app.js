@@ -300,10 +300,8 @@ function extractFromText(text) {
     lower.includes("pin") &&
     cleaned.match(/\d{4}\s\d{5}\s\d{5}\s\d{5}/)
   ) {
-    retailerSelect.value = "Other…";
-    customRetailer.value = "Kohls";
-    customRetailer.classList.remove("hidden");
-
+    retailerSelect.value = "Kohls";
+    customRetailer.classList.add("hidden");
     const cardMatch = cleaned.match(/(\d{4}\s\d{5}\s\d{5}\s\d{5})/);
     if (cardMatch) {
       cardNumber.value = cardMatch[0].replace(/\s/g, "");
