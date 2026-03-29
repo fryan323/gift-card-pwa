@@ -230,7 +230,7 @@ function checkBalance(retailer, cardNumber) {
       url = "https://www.walmart.com/account/giftcards/balance";
       break;
     case "kohls":
-      url = "https://www.kohls.com/check_balance.jsp";
+      url = "https://www.kohls.com/giftcard/gift_card_check_balance.jsp";
       break;
     case "giftcards.com":
       url = "https://www.giftcards.com/us/en/self-serve/check-balance";
