@@ -105,7 +105,6 @@ function showTab(tab) {
 function openForm() {
   editingId = null;
 
-  // reset fields
   retailerSelect.value = "Target";
   customRetailer.value = "";
   customRetailer.classList.add("hidden");
@@ -115,11 +114,11 @@ function openForm() {
   discount.value = "";
   balance.value = "";
 
-  modal.classList.remove("hidden");
+  document.getElementById("modal").classList.remove("hidden");
 }
 
 function closeForm() {
-  modal.classList.add("hidden");
+  document.getElementById("modal").classList.add("hidden");
 }
 
 function saveCard() {
