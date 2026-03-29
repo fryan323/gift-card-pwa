@@ -22,16 +22,25 @@ function getRetailer() {
   return retailerSelect.value === "Other…" ? customRetailer.value : retailerSelect.value;
 }
 
+// ✅ MATCHES YOUR SWIFT LOGIC
 function normalize(s) {
   return s.trim().toLowerCase();
+}
+
+function normalizeNumber(s) {
+  return s.replace(/\D/g,'');
+}
+
+function normalizeCode(s) {
+  return s.trim().toLowerCase().replace(/\s/g,'');
 }
 
 function isDuplicate(card, exclude=null) {
   return cards.some(c =>
     c.id !== exclude &&
     normalize(c.retailer) === normalize(card.retailer) &&
-    c.cardNumber.replace(/\D/g,'') === card.cardNumber.replace(/\D/g,'') &&
-    normalize(c.code) === normalize(card.code)
+    normalizeNumber(c.cardNumber) === normalizeNumber(card.cardNumber) &&
+    normalizeCode(c.code) === normalizeCode(card.code)
   );
 }
 
@@ -95,6 +104,17 @@ function showTab(tab) {
 
 function openForm() {
   editingId = null;
+
+  // reset fields
+  retailerSelect.value = "Target";
+  customRetailer.value = "";
+  customRetailer.classList.add("hidden");
+
+  cardNumber.value = "";
+  code.value = "";
+  discount.value = "";
+  balance.value = "";
+
   modal.classList.remove("hidden");
 }
 
@@ -134,17 +154,28 @@ function saveCard() {
   render();
 }
 
+// ✅ FIXED EDIT FUNCTION
 function editCard(id) {
   const c = cards.find(c=>c.id===id);
   editingId = id;
 
-  retailerSelect.value = c.retailer;
+  const options = Array.from(retailerSelect.options).map(o => o.value);
+
+  if (options.includes(c.retailer)) {
+    retailerSelect.value = c.retailer;
+    customRetailer.classList.add("hidden");
+  } else {
+    retailerSelect.value = "Other…";
+    customRetailer.value = c.retailer;
+    customRetailer.classList.remove("hidden");
+  }
+
   cardNumber.value = c.cardNumber;
   code.value = c.code;
   discount.value = c.percentDiscount;
   balance.value = c.balance;
 
-  openForm();
+  modal.classList.remove("hidden");
 }
 
 function deleteCard(id) {
