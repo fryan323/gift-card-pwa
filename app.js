@@ -14,33 +14,11 @@ function showToast(msg) {
 }
 
 function toggleOther() {
-  const val = retailerSelect.value;
-  customRetailer.classList.toggle("hidden", val !== "Other…");
+  customRetailer.classList.toggle("hidden", retailerSelect.value !== "Other…");
 }
 
 function getRetailer() {
   return retailerSelect.value === "Other…" ? customRetailer.value : retailerSelect.value;
-}
-
-function normalize(s) {
-  return s.trim().toLowerCase();
-}
-
-function normalizeNumber(s) {
-  return s.replace(/\D/g,'');
-}
-
-function normalizeCode(s) {
-  return s.trim().toLowerCase().replace(/\s/g,'');
-}
-
-function isDuplicate(card, exclude=null) {
-  return cards.some(c =>
-    c.id !== exclude &&
-    normalize(c.retailer) === normalize(card.retailer) &&
-    normalizeNumber(c.cardNumber) === normalizeNumber(card.cardNumber) &&
-    normalizeCode(c.code) === normalizeCode(card.code)
-  );
 }
 
 function render() {
@@ -50,46 +28,20 @@ function render() {
 
 function renderCards() {
   let list = document.getElementById("card-list");
-  let search = document.getElementById("search").value.toLowerCase();
-  let hideZero = document.getElementById("hideZero").checked;
-  let sort = document.getElementById("sort").value;
 
-  let filtered = [...cards].reverse();
-
-  if (hideZero) filtered = filtered.filter(c => c.balance !== 0);
-
-  if (search) {
-    filtered = filtered.filter(c =>
-      c.retailer.toLowerCase().includes(search) ||
-      c.cardNumber.includes(search) ||
-      c.code.includes(search)
-    );
-  }
-
-  if (sort === "desc") filtered.sort((a,b)=>b.balance-a.balance);
-  if (sort === "asc") filtered.sort((a,b)=>a.balance-b.balance);
-  if (sort === "alpha") filtered.sort((a,b)=>a.retailer.localeCompare(b.retailer));
-
-  list.innerHTML = filtered.map(c => `
-    <div class="card ${c.balance==0?'used':''}" onclick="editCard('${c.id}')">
-      
+  list.innerHTML = cards.slice().reverse().map(c => `
+    <div class="card" data-id="${c.id}">
       <div class="card-row">
 
         <div class="card-icon">💳</div>
 
         <div class="card-info">
-          <div class="title">
-            ${c.retailer} •••• ${c.cardNumber.slice(-4)}
-          </div>
-
+          <div class="title">${c.retailer} •••• ${c.cardNumber.slice(-4)}</div>
           <div class="subtitle">
             Balance: $${c.balance.toFixed(2)}
             ${c.balance==0?'<span class="badge">Used</span>':''}
           </div>
-
-          <div class="discount">
-            Discount: ${c.percentDiscount || 0}%
-          </div>
+          <div class="discount">Discount: ${c.percentDiscount || 0}%</div>
         </div>
 
         <div class="copy-container" onclick="event.stopPropagation()">
@@ -98,17 +50,20 @@ function renderCards() {
         </div>
 
       </div>
-
     </div>
   `).join("");
+
+  // ✅ FIXED CLICK HANDLER
+  document.querySelectorAll(".card").forEach(el => {
+    el.addEventListener("click", function() {
+      editCard(this.dataset.id);
+    });
+  });
 }
 
 function renderTotals() {
   const totals = {};
   cards.forEach(c => totals[c.retailer]=(totals[c.retailer]||0)+c.balance);
-
-  document.getElementById("card-list").innerHTML = "";
-  document.getElementById("totals-view").classList.remove("hidden");
 
   document.getElementById("totals-view").innerHTML =
     Object.entries(totals)
@@ -126,42 +81,28 @@ function openForm() {
   editingId = null;
 
   retailerSelect.value = "Target";
-  customRetailer.value = "";
-  customRetailer.classList.add("hidden");
-
   cardNumber.value = "";
   code.value = "";
   discount.value = "";
   balance.value = "";
 
-  document.getElementById("deleteBtn").style.display = "none";
-
-  document.getElementById("modal").classList.add("show");
+  deleteBtn.style.display = "none";
+  modal.classList.add("show");
 }
 
 function closeForm() {
-  document.getElementById("modal").classList.remove("show");
+  modal.classList.remove("show");
 }
 
 function saveCard() {
   const card = {
-    id: editingId ? editingId : crypto.randomUUID(),
+    id: editingId || crypto.randomUUID(),
     retailer: getRetailer(),
     cardNumber: cardNumber.value,
     code: code.value,
     percentDiscount: parseFloat(discount.value)||0,
     balance: parseFloat(balance.value)||0
   };
-
-  if (!card.retailer || !card.cardNumber || !card.code) {
-    alert("Missing required fields");
-    return;
-  }
-
-  if (!editingId && isDuplicate(card)) {
-    alert("Duplicate card");
-    return;
-  }
 
   if (editingId) {
     cards = cards.map(c => c.id === editingId ? card : c);
@@ -171,202 +112,66 @@ function saveCard() {
 
   save();
   closeForm();
-  showToast("Saved");
   render();
+  showToast("Saved");
 }
 
 function editCard(id) {
   const c = cards.find(c=>c.id===id);
   editingId = id;
 
-  const options = Array.from(retailerSelect.options).map(o => o.value);
-
-  if (options.includes(c.retailer)) {
-    retailerSelect.value = c.retailer;
-    customRetailer.classList.add("hidden");
-  } else {
-    retailerSelect.value = "Other…";
-    customRetailer.value = c.retailer;
-    customRetailer.classList.remove("hidden");
-  }
-
+  retailerSelect.value = c.retailer;
   cardNumber.value = c.cardNumber;
   code.value = c.code;
   discount.value = c.percentDiscount;
   balance.value = c.balance;
 
-  document.getElementById("deleteBtn").style.display = "block";
-
-  document.getElementById("modal").classList.add("show");
+  deleteBtn.style.display = "block";
+  modal.classList.add("show");
 }
 
 function deleteCurrentCard() {
-  if (!editingId) return;
-
   cards = cards.filter(c=>c.id!==editingId);
   save();
   closeForm();
   render();
 }
 
-/* COPY */
-function copyCardNumber(number) {
-  navigator.clipboard.writeText(number);
+function copyCardNumber(n) {
+  navigator.clipboard.writeText(n);
   showToast("Copied card number");
 }
 
-function copyCode(codeValue) {
-  navigator.clipboard.writeText(codeValue);
+function copyCode(c) {
+  navigator.clipboard.writeText(c);
   showToast("Copied code");
 }
 
-/* CHECK BALANCE */
-function checkBalance(retailer, cardNumber) {
-  navigator.clipboard.writeText(cardNumber);
+function checkBalanceFromModal() {
+  const retailer = getRetailer();
+  const number = cardNumber.value;
+
+  navigator.clipboard.writeText(number);
   showToast("Card number copied");
 
   let url = "";
 
   switch (retailer.toLowerCase()) {
     case "lego":
-      url = "https://www.lego.com/en-us/gift-cards/balance";
-      break;
+      url = "https://www.lego.com/en-us/gift-cards/balance"; break;
     case "target":
-      url = "https://www.target.com/guest/gift-card-balance";
-      break;
+      url = "https://www.target.com/guest/gift-card-balance"; break;
     case "walmart":
-      url = "https://www.walmart.com/account/giftcards/balance";
-      break;
+      url = "https://www.walmart.com/account/giftcards/balance"; break;
     case "kohls":
-      url = "https://www.kohls.com/giftcard/gift_card_check_balance.jsp";
-      break;
+      url = "https://www.kohls.com/giftcard/gift_card_check_balance.jsp"; break;
     case "giftcards.com":
-      url = "https://www.giftcards.com/us/en/self-serve/check-balance";
-      break;
+      url = "https://www.giftcards.com/us/en/self-serve/check-balance"; break;
     default:
-      alert("No balance checker available");
-      return;
+      alert("No balance checker available"); return;
   }
 
   window.open(url, "_blank");
-}
-
-/* EXPORT */
-function exportData() {
-  const dataStr = JSON.stringify(cards, null, 2);
-  const blob = new Blob([dataStr], { type: "text/plain" });
-  const url = URL.createObjectURL(blob);
-
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "gift-cards-backup.txt";
-  a.click();
-
-  URL.revokeObjectURL(url);
-  showToast("Exported cards");
-}
-
-/* DOM READY (unchanged) */
-document.addEventListener("DOMContentLoaded", function() {
-  const photoInput = document.getElementById("photoInput");
-  if (photoInput) {
-    photoInput.addEventListener("change", async function(e) {
-      const file = e.target.files[0];
-      if (!file) return;
-
-      showToast("Scanning...");
-
-      try {
-        const result = await Tesseract.recognize(file, 'eng');
-        extractFromText(result.data.text);
-        showToast("Populated from image");
-      } catch {
-        alert("Scan failed");
-      }
-    });
-  }
-
-  const importInput = document.getElementById("importFile");
-  if (importInput) {
-    importInput.addEventListener("change", function(e) {
-      const file = e.target.files[0];
-      if (!file) return;
-
-      const reader = new FileReader();
-
-      reader.onload = function(event) {
-        try {
-          const imported = JSON.parse(event.target.result);
-          if (!Array.isArray(imported)) throw new Error();
-
-          cards = imported;
-          save();
-          render();
-
-          showToast("Imported cards");
-        } catch {
-          alert("Import failed");
-        }
-      };
-
-      reader.readAsText(file);
-    });
-  }
-});
-
-/* OCR PARSER (unchanged) */
-function extractFromText(text) {
-  const cleaned = text.replace(/\n/g, " ");
-  const lower = cleaned.toLowerCase();
-
-  if (lower.includes("lego")) {
-    retailerSelect.value = "LEGO";
-    const match = cleaned.match(/(\d{4}\s?\d{4}\s?\d{4}\s?\d{4}\s?\d{3})/);
-    if (match) cardNumber.value = match[0].replace(/\s/g, "");
-    const pin = cleaned.match(/pin[:\s]*([0-9]{4,8})/i);
-    if (pin) code.value = pin[1];
-    const bal = cleaned.match(/\$?\d+\.\d{2}/);
-    if (bal) balance.value = bal[0].replace("$","");
-    return;
-  }
-
-  if (lower.includes("giftcards.com")) {
-    retailerSelect.value = "Giftcards.com";
-    const match = cleaned.match(/(\d{4}\s?\d{4}\s?\d{4}\s?\d{4}\s?\d{3})/);
-    if (match) cardNumber.value = match[0].replace(/\s/g, "");
-    let pinMatch = cleaned.match(/p.?n[:\s]*([0-9]{4,8})/i);
-    if (pinMatch) code.value = pinMatch[1];
-    const bal = cleaned.match(/\$?\d+\.\d{2}/);
-    if (bal) balance.value = bal[0].replace("$","");
-    return;
-  }
-
-  if (lower.includes("target")) {
-    retailerSelect.value = "Target";
-    const card = cleaned.match(/gift\s*card\s*number[:\s]*([0-9]{12,20})/i);
-    if (card) cardNumber.value = card[1];
-    const access = cleaned.match(/access.*?([0-9]{6,12})/i);
-    if (access) code.value = access[1];
-    const bal = cleaned.match(/\$?\d+\.\d{2}/);
-    if (bal) balance.value = bal[0].replace("$","");
-    return;
-  }
-
-  if (cleaned.match(/\d{4}\s\d{5}\s\d{5}\s\d{5}/)) {
-    retailerSelect.value = "Kohls";
-    const match = cleaned.match(/(\d{4}\s\d{5}\s\d{5}\s\d{5})/);
-    if (match) cardNumber.value = match[0].replace(/\s/g, "");
-    const pin = cleaned.match(/pin[:\s]*([0-9]{4})/i);
-    if (pin) code.value = pin[1];
-    const bal = cleaned.match(/\$?\d+\.\d{2}/);
-    if (bal) balance.value = bal[0].replace("$","");
-    return;
-  }
-
-  const numbers = cleaned.match(/\d{8,}/g);
-  if (numbers) cardNumber.value = numbers.sort((a,b)=>b.length-a.length)[0];
-  const bal = cleaned.match(/\$?\d+\.\d{2}/);
-  if (bal) balance.value = bal[0].replace("$","");
 }
 
 render();
