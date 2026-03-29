@@ -22,7 +22,6 @@ function getRetailer() {
   return retailerSelect.value === "Other…" ? customRetailer.value : retailerSelect.value;
 }
 
-// ✅ MATCHES YOUR SWIFT LOGIC
 function normalize(s) {
   return s.trim().toLowerCase();
 }
@@ -74,9 +73,10 @@ function renderCards() {
   list.innerHTML = filtered.map(c => `
     <div class="card ${c.balance==0?'used':''}">
       <b>${c.retailer}</b> •••• ${c.cardNumber.slice(-4)}<br>
-      Balance: $${c.balance.toFixed(2)}
-      ${c.balance==0?'<span class="badge">Used</span>':''}
-      <br>
+      <div class="balance">
+        Balance: $${c.balance.toFixed(2)}
+        ${c.balance==0?'<span class="badge">Used</span>':''}
+      </div>
       <button onclick="editCard('${c.id}')">Edit</button>
       <button onclick="deleteCard('${c.id}')">Delete</button>
     </div>
@@ -114,16 +114,16 @@ function openForm() {
   discount.value = "";
   balance.value = "";
 
-  document.getElementById("modal").classList.remove("hidden");
+  document.getElementById("modal").classList.add("show");
 }
 
 function closeForm() {
-  document.getElementById("modal").classList.add("hidden");
+  document.getElementById("modal").classList.remove("show");
 }
 
 function saveCard() {
   const card = {
-    id: editingId ? editingId : crypto.randomUUID(), // 🔥 critical fix
+    id: editingId ? editingId : crypto.randomUUID(),
     retailer: getRetailer(),
     cardNumber: cardNumber.value,
     code: code.value,
@@ -136,7 +136,7 @@ function saveCard() {
     return;
   }
 
-  // 🔥 ONLY check duplicates when ADDING
+  // Only check duplicates when adding
   if (!editingId && isDuplicate(card)) {
     alert("Duplicate card");
     return;
@@ -154,7 +154,6 @@ function saveCard() {
   render();
 }
 
-// ✅ FIXED EDIT FUNCTION
 function editCard(id) {
   const c = cards.find(c=>c.id===id);
   editingId = id;
@@ -175,7 +174,7 @@ function editCard(id) {
   discount.value = c.percentDiscount;
   balance.value = c.balance;
 
-  modal.classList.remove("hidden");
+  document.getElementById("modal").classList.add("show");
 }
 
 function deleteCard(id) {
