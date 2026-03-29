@@ -1,3 +1,4 @@
+/* Base */
 body {
   font-family: -apple-system, BlinkMacSystemFont, sans-serif;
   margin: 0;
@@ -52,22 +53,11 @@ input, select {
   padding: 14px;
   border-radius: 16px;
   box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  cursor: pointer;
 }
 
 .card.used {
   opacity: 0.65;
-}
-
-.balance {
-  margin-top: 4px;
-}
-
-.badge {
-  font-size: 10px;
-  background: #e5e5ea;
-  padding: 2px 6px;
-  border-radius: 10px;
-  margin-left: 6px;
 }
 
 /* Card row layout */
@@ -77,7 +67,7 @@ input, select {
   gap: 12px;
 }
 
-/* Icon (no logos version) */
+/* Icon */
 .card-icon {
   width: 36px;
   height: 36px;
@@ -91,8 +81,7 @@ input, select {
 
 /* Text layout */
 .card-info {
-  display: flex;
-  flex-direction: column;
+  flex: 1;
 }
 
 /* Title */
@@ -108,12 +97,36 @@ input, select {
   margin-top: 2px;
 }
 
-/* Actions */
-.actions {
-  margin-top: 8px;
+/* Discount line */
+.discount {
+  font-size: 12px;
+  color: gray;
+  margin-top: 2px;
+}
+
+/* Badge */
+.badge {
+  font-size: 10px;
+  background: #e5e5ea;
+  padding: 2px 6px;
+  border-radius: 10px;
+  margin-left: 6px;
+}
+
+/* Copy buttons (RIGHT SIDE) */
+.copy-container {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: row;   /* side-by-side */
   gap: 6px;
+}
+
+.copy-container button {
+  background: #eee;
+  border: none;
+  border-radius: 8px;
+  height: 36px;
+  width: 50px;
+  font-size: 12px;
 }
 
 /* Modal */
@@ -165,12 +178,11 @@ input, select {
   border-top: 1px solid #ddd;
 }
 
-/* ✅ UPDATED TAB BUTTONS */
 .tabbar button {
   background: none;
   border: none;
-  font-size: 21px;          /* 75% bigger */
-  padding: 12px 20px;       /* larger tap area */
+  font-size: 21px;
+  padding: 12px 20px;
   color: #007aff;
   display: flex;
   flex-direction: column;
@@ -193,33 +205,4 @@ input, select {
 /* Hidden */
 .hidden {
   display: none;
-}
-
-.card-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.card-info {
-  flex: 1;
-}
-
-.discount {
-  font-size: 12px;
-  color: gray;
-}
-
-.copy-container {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.copy-container button {
-  background: #eee;
-  border: none;
-  border-radius: 8px;
-  height: 36px;
-  width: 50px;
 }
