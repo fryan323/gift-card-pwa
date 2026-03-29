@@ -194,3 +194,32 @@ input, select {
 .hidden {
   display: none;
 }
+
+.card-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.card-info {
+  flex: 1;
+}
+
+.discount {
+  font-size: 12px;
+  color: gray;
+}
+
+.copy-container {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.copy-container button {
+  background: #eee;
+  border: none;
+  border-radius: 8px;
+  height: 36px;
+  width: 50px;
+}
