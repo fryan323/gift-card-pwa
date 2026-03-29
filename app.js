@@ -71,9 +71,10 @@ function renderCards() {
   if (sort === "alpha") filtered.sort((a,b)=>a.retailer.localeCompare(b.retailer));
 
   list.innerHTML = filtered.map(c => `
-    <div class="card ${c.balance==0?'used':''}">
+    <div class="card ${c.balance==0?'used':''}" onclick="editCard('${c.id}')">
       
       <div class="card-row">
+
         <div class="card-icon">💳</div>
 
         <div class="card-info">
@@ -85,17 +86,17 @@ function renderCards() {
             Balance: $${c.balance.toFixed(2)}
             ${c.balance==0?'<span class="badge">Used</span>':''}
           </div>
-        </div>
-      </div>
 
-      <div class="actions">
-        <button onclick="editCard('${c.id}')">Edit</button>
-        <button onclick="deleteCard('${c.id}')">Delete</button>
-        <button onclick="copyCardNumber('${c.cardNumber}')">Copy #</button>
-        <button onclick="copyCode('${c.code}')">Copy Code</button>
-        <button onclick="checkBalance('${c.retailer}', '${c.cardNumber}')">
-          Check Balance
-        </button>
+          <div class="discount">
+            Discount: ${c.percentDiscount || 0}%
+          </div>
+        </div>
+
+        <div class="copy-container" onclick="event.stopPropagation()">
+          <button onclick="copyCardNumber('${c.cardNumber}')">#</button>
+          <button onclick="copyCode('${c.code}')">Code</button>
+        </div>
+
       </div>
 
     </div>
@@ -132,6 +133,8 @@ function openForm() {
   code.value = "";
   discount.value = "";
   balance.value = "";
+
+  document.getElementById("deleteBtn").style.display = "none";
 
   document.getElementById("modal").classList.add("show");
 }
@@ -192,12 +195,17 @@ function editCard(id) {
   discount.value = c.percentDiscount;
   balance.value = c.balance;
 
+  document.getElementById("deleteBtn").style.display = "block";
+
   document.getElementById("modal").classList.add("show");
 }
 
-function deleteCard(id) {
-  cards = cards.filter(c=>c.id!==id);
+function deleteCurrentCard() {
+  if (!editingId) return;
+
+  cards = cards.filter(c=>c.id!==editingId);
   save();
+  closeForm();
   render();
 }
 
@@ -258,9 +266,8 @@ function exportData() {
   showToast("Exported cards");
 }
 
-/* DOM READY */
+/* DOM READY (unchanged) */
 document.addEventListener("DOMContentLoaded", function() {
-
   const photoInput = document.getElementById("photoInput");
   if (photoInput) {
     photoInput.addEventListener("change", async function(e) {
@@ -271,12 +278,9 @@ document.addEventListener("DOMContentLoaded", function() {
 
       try {
         const result = await Tesseract.recognize(file, 'eng');
-        const text = result.data.text;
-
-        extractFromText(text);
-
+        extractFromText(result.data.text);
         showToast("Populated from image");
-      } catch (err) {
+      } catch {
         alert("Scan failed");
       }
     });
@@ -308,10 +312,9 @@ document.addEventListener("DOMContentLoaded", function() {
       reader.readAsText(file);
     });
   }
-
 });
 
-/* OCR PARSER (unchanged from your working version) */
+/* OCR PARSER (unchanged) */
 function extractFromText(text) {
   const cleaned = text.replace(/\n/g, " ");
   const lower = cleaned.toLowerCase();
