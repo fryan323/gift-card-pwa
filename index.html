@@ -1,187 +1,82 @@
-let cards = JSON.parse(localStorage.getItem("cards")) || [];
-let editingId = null;
-let currentTab = "cards";
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Gift Cards</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="style.css">
+</head>
 
-function save() {
-  localStorage.setItem("cards", JSON.stringify(cards));
-}
+<body>
 
-function showToast(msg) {
-  const t = document.getElementById("toast");
-  t.innerText = msg;
-  t.style.display = "block";
-  setTimeout(() => t.style.display = "none", 1200);
-}
+  <!-- HEADER -->
+  <div class="header">
+    <h1>Gift Cards</h1>
+    <button onclick="openForm()">＋</button>
+  </div>
 
-function toggleOther() {
-  const val = retailerSelect.value;
-  customRetailer.classList.toggle("hidden", val !== "Other…");
-}
+  <!-- SEARCH -->
+  <input id="search" placeholder="Search..." oninput="render()">
 
-function getRetailer() {
-  return retailerSelect.value === "Other…" ? customRetailer.value : retailerSelect.value;
-}
+  <!-- FILTERS -->
+  <div class="filters">
+    <select id="sort" onchange="render()">
+      <option value="default">Added Order</option>
+      <option value="desc">Balance ↓</option>
+      <option value="asc">Balance ↑</option>
+      <option value="alpha">Alphabetical</option>
+    </select>
 
-// ✅ MATCHES YOUR SWIFT LOGIC
-function normalize(s) {
-  return s.trim().toLowerCase();
-}
+    <label>
+      <input type="checkbox" id="hideZero" onchange="render()">
+      Hide $0
+    </label>
+  </div>
 
-function normalizeNumber(s) {
-  return s.replace(/\D/g,'');
-}
+  <!-- CARD LIST -->
+  <div id="card-list"></div>
 
-function normalizeCode(s) {
-  return s.trim().toLowerCase().replace(/\s/g,'');
-}
+  <!-- TOTALS TAB -->
+  <div id="totals-view" class="hidden"></div>
 
-function isDuplicate(card, exclude=null) {
-  return cards.some(c =>
-    c.id !== exclude &&
-    normalize(c.retailer) === normalize(card.retailer) &&
-    normalizeNumber(c.cardNumber) === normalizeNumber(card.cardNumber) &&
-    normalizeCode(c.code) === normalizeCode(card.code)
-  );
-}
+  <!-- TAB BAR -->
+  <div class="tabbar">
+    <button onclick="showTab('cards')">Cards</button>
+    <button onclick="showTab('totals')">Totals</button>
+  </div>
 
-function render() {
-  if (currentTab === "cards") renderCards();
-  else renderTotals();
-}
+  <!-- MODAL -->
+  <div id="modal" class="hidden">
+    <div class="modal-content">
+      <h2 id="form-title">Add Card</h2>
 
-function renderCards() {
-  let list = document.getElementById("card-list");
-  let search = document.getElementById("search").value.toLowerCase();
-  let hideZero = document.getElementById("hideZero").checked;
-  let sort = document.getElementById("sort").value;
+      <select id="retailerSelect" onchange="toggleOther()">
+        <option>Target</option>
+        <option>Walmart</option>
+        <option>Best Buy</option>
+        <option>Barnes & Noble</option>
+        <option>Macy’s</option>
+        <option>Scheels</option>
+        <option>LEGO</option>
+        <option>Giftcards.com</option>
+        <option>Other…</option>
+      </select>
 
-  let filtered = [...cards].reverse();
+      <input id="customRetailer" placeholder="Custom retailer" class="hidden">
 
-  if (hideZero) filtered = filtered.filter(c => c.balance !== 0);
+      <input id="cardNumber" placeholder="Card Number">
+      <input id="code" placeholder="Code">
+      <input id="discount" placeholder="Discount %" type="number">
+      <input id="balance" placeholder="Balance" type="number">
 
-  if (search) {
-    filtered = filtered.filter(c =>
-      c.retailer.toLowerCase().includes(search) ||
-      c.cardNumber.includes(search) ||
-      c.code.includes(search)
-    );
-  }
-
-  if (sort === "desc") filtered.sort((a,b)=>b.balance-a.balance);
-  if (sort === "asc") filtered.sort((a,b)=>a.balance-b.balance);
-  if (sort === "alpha") filtered.sort((a,b)=>a.retailer.localeCompare(b.retailer));
-
-  list.innerHTML = filtered.map(c => `
-    <div class="card ${c.balance==0?'used':''}">
-      <b>${c.retailer}</b> •••• ${c.cardNumber.slice(-4)}<br>
-      Balance: $${c.balance.toFixed(2)}
-      ${c.balance==0?'<span class="badge">Used</span>':''}
-      <br>
-      <button onclick="editCard('${c.id}')">Edit</button>
-      <button onclick="deleteCard('${c.id}')">Delete</button>
+      <button onclick="saveCard()">Save</button>
+      <button onclick="closeForm()">Cancel</button>
     </div>
-  `).join("");
-}
+  </div>
 
-function renderTotals() {
-  const totals = {};
-  cards.forEach(c => totals[c.retailer]=(totals[c.retailer]||0)+c.balance);
+  <!-- TOAST -->
+  <div id="toast"></div>
 
-  document.getElementById("card-list").innerHTML = "";
-  document.getElementById("totals-view").classList.remove("hidden");
-
-  document.getElementById("totals-view").innerHTML =
-    Object.entries(totals)
-      .map(([r,b])=>`<div class="card"><b>${r}</b> $${b.toFixed(2)}</div>`)
-      .join("");
-}
-
-function showTab(tab) {
-  currentTab = tab;
-  document.getElementById("totals-view").classList.toggle("hidden", tab!=="totals");
-  render();
-}
-
-function openForm() {
-  editingId = null;
-
-  // reset fields
-  retailerSelect.value = "Target";
-  customRetailer.value = "";
-  customRetailer.classList.add("hidden");
-
-  cardNumber.value = "";
-  code.value = "";
-  discount.value = "";
-  balance.value = "";
-
-  modal.classList.remove("hidden");
-}
-
-function closeForm() {
-  modal.classList.add("hidden");
-}
-
-function saveCard() {
-  const card = {
-    id: editingId || crypto.randomUUID(),
-    retailer: getRetailer(),
-    cardNumber: cardNumber.value,
-    code: code.value,
-    percentDiscount: parseFloat(discount.value)||0,
-    balance: parseFloat(balance.value)||0
-  };
-
-  if (!card.retailer || !card.cardNumber || !card.code) {
-    alert("Missing required fields");
-    return;
-  }
-
-  if (isDuplicate(card, editingId)) {
-    alert("Duplicate card");
-    return;
-  }
-
-  if (editingId) {
-    cards = cards.map(c=>c.id===editingId?card:c);
-  } else {
-    cards.push(card);
-  }
-
-  save();
-  closeForm();
-  showToast("Saved");
-  render();
-}
-
-// ✅ FIXED EDIT FUNCTION
-function editCard(id) {
-  const c = cards.find(c=>c.id===id);
-  editingId = id;
-
-  const options = Array.from(retailerSelect.options).map(o => o.value);
-
-  if (options.includes(c.retailer)) {
-    retailerSelect.value = c.retailer;
-    customRetailer.classList.add("hidden");
-  } else {
-    retailerSelect.value = "Other…";
-    customRetailer.value = c.retailer;
-    customRetailer.classList.remove("hidden");
-  }
-
-  cardNumber.value = c.cardNumber;
-  code.value = c.code;
-  discount.value = c.percentDiscount;
-  balance.value = c.balance;
-
-  modal.classList.remove("hidden");
-}
-
-function deleteCard(id) {
-  cards = cards.filter(c=>c.id!==id);
-  save();
-  render();
-}
-
-render();
+  <script src="app.js"></script>
+</body>
+</html>
