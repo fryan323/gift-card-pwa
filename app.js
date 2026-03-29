@@ -71,16 +71,34 @@ function renderCards() {
   if (sort === "alpha") filtered.sort((a,b)=>a.retailer.localeCompare(b.retailer));
 
   list.innerHTML = filtered.map(c => `
-    <div class="card ${c.balance==0?'used':''}">
-      <b>${c.retailer}</b> •••• ${c.cardNumber.slice(-4)}<br>
-      <div class="balance">
-        Balance: $${c.balance.toFixed(2)}
-        ${c.balance==0?'<span class="badge">Used</span>':''}
+  <div class="card ${c.balance==0?'used':''}">
+    
+    <div class="card-row">
+
+      <div class="card-icon">
+        💳
       </div>
+
+      <div class="card-info">
+        <div class="title">
+          ${c.retailer} •••• ${c.cardNumber.slice(-4)}
+        </div>
+
+        <div class="subtitle">
+          Balance: $${c.balance.toFixed(2)}
+          ${c.balance==0?'<span class="badge">Used</span>':''}
+        </div>
+      </div>
+
+    </div>
+
+    <div class="actions">
       <button onclick="editCard('${c.id}')">Edit</button>
       <button onclick="deleteCard('${c.id}')">Delete</button>
     </div>
-  `).join("");
+
+  </div>
+`).join("");
 }
 
 function renderTotals() {
