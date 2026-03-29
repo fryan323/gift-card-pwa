@@ -91,6 +91,8 @@ function renderCards() {
       <div class="actions">
         <button onclick="editCard('${c.id}')">Edit</button>
         <button onclick="deleteCard('${c.id}')">Delete</button>
+        <button onclick="copyCardNumber('${c.cardNumber}')">Copy #</button>
+        <button onclick="copyCode('${c.code}')">Copy Code</button>
       </div>
 
     </div>
@@ -196,142 +198,15 @@ function deleteCard(id) {
   render();
 }
 
-/* OCR HANDLER */
-document.getElementById("photoInput").addEventListener("change", async function(e) {
-  const file = e.target.files[0];
-  if (!file) return;
+/* COPY FUNCTIONS */
+function copyCardNumber(number) {
+  navigator.clipboard.writeText(number);
+  showToast("Copied card number");
+}
 
-  showToast("Scanning...");
-
-  try {
-    const result = await Tesseract.recognize(file, 'eng');
-    const text = result.data.text;
-
-    console.log("OCR TEXT:", text);
-
-    extractFromText(text);
-
-    showToast("Populated from image");
-  } catch (err) {
-    console.error(err);
-    alert("Scan failed");
-  }
-});
-
-/* OCR PARSER */
-function extractFromText(text) {
-  const cleaned = text.replace(/\n/g, " ");
-  const lower = cleaned.toLowerCase();
-
-  // -----------------------------
-  // LEGO
-  // -----------------------------
-  if (lower.includes("lego")) {
-    retailerSelect.value = "LEGO";
-
-    const cardMatch = cleaned.match(/(\d{4}\s?\d{4}\s?\d{4}\s?\d{4}\s?\d{3})/);
-    if (cardMatch) {
-      cardNumber.value = cardMatch[0].replace(/\s/g, "");
-    }
-
-    const pinMatch = cleaned.match(/pin[:\s]*([0-9]{4,8})/i);
-    if (pinMatch) {
-      code.value = pinMatch[1];
-    }
-
-    const balanceMatch = cleaned.match(/\$?\d+\.\d{2}/);
-    if (balanceMatch) {
-      balance.value = balanceMatch[0].replace("$","");
-    }
-
-    return;
-  }
-
-  // -----------------------------
-  // TARGET
-  // -----------------------------
-  if (lower.includes("target")) {
-    retailerSelect.value = "Target";
-
-    const cardMatch = cleaned.match(/gift\s*card\s*number[:\s]*([0-9]{12,20})/i);
-    if (cardMatch) {
-      cardNumber.value = cardMatch[1];
-    } else {
-      const numbers = cleaned.match(/\d+/g);
-      if (numbers) {
-        const longest = numbers.sort((a,b)=>b.length-a.length)[0];
-        if (longest.length >= 12) {
-          cardNumber.value = longest;
-        }
-      }
-    }
-
-    let accessMatch = cleaned.match(/access\s*number[:\s]*([0-9]{4,12})/i);
-
-    if (!accessMatch) {
-      accessMatch = cleaned.match(/access.*?([0-9]{6,12})/i);
-    }
-
-    if (!accessMatch) {
-      const numbers = cleaned.match(/\b\d{6,10}\b/g);
-      if (numbers) {
-        const filtered = numbers.filter(n => n !== cardNumber.value);
-        if (filtered.length > 0) {
-          code.value = filtered[0];
-        }
-      }
-    } else {
-      code.value = accessMatch[1];
-    }
-
-    const balanceMatch = cleaned.match(/\$?\d+\.\d{2}/);
-    if (balanceMatch) {
-      balance.value = balanceMatch[0].replace("$","");
-    }
-
-    return;
-  }
-
-  // -----------------------------
-  // KOHLS
-  // -----------------------------
-  if (
-    lower.includes("card number") &&
-    lower.includes("pin") &&
-    cleaned.match(/\d{4}\s\d{5}\s\d{5}\s\d{5}/)
-  ) {
-    retailerSelect.value = "Kohls";
-    customRetailer.classList.add("hidden");
-    const cardMatch = cleaned.match(/(\d{4}\s\d{5}\s\d{5}\s\d{5})/);
-    if (cardMatch) {
-      cardNumber.value = cardMatch[0].replace(/\s/g, "");
-    }
-
-    const pinMatch = cleaned.match(/pin[:\s]*([0-9]{4,8})/i);
-    if (pinMatch) {
-      code.value = pinMatch[1];
-    }
-
-    const balanceMatch = cleaned.match(/\$?\d+\.\d{2}/);
-    if (balanceMatch) {
-      balance.value = balanceMatch[0].replace("$","");
-    }
-
-    return;
-  }
-
-  // -----------------------------
-  // GENERIC
-  // -----------------------------
-  const numbers = cleaned.match(/\d{8,}/g);
-  if (numbers) {
-    cardNumber.value = numbers.sort((a,b)=>b.length-a.length)[0];
-  }
-
-  const balanceMatch = cleaned.match(/\$?\d+\.\d{2}/);
-  if (balanceMatch) {
-    balance.value = balanceMatch[0].replace("$","");
-  }
+function copyCode(codeValue) {
+  navigator.clipboard.writeText(codeValue);
+  showToast("Copied code");
 }
 
 render();
