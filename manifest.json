@@ -1,0 +1,8 @@
+{
+  "name": "Gift Card Wallet",
+  "short_name": "Cards",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#000000"
+}
