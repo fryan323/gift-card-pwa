@@ -224,7 +224,7 @@ function exportData() {
   showToast("Exported cards");
 }
 
-/* DOM READY (OCR + IMPORT) */
+/* DOM READY */
 document.addEventListener("DOMContentLoaded", function() {
 
   const photoInput = document.getElementById("photoInput");
@@ -301,15 +301,32 @@ function extractFromText(text) {
     return;
   }
 
-  // GIFTCARDS.COM
+  // GIFTCARDS.COM (FIXED)
   if (lower.includes("giftcards.com")) {
     retailerSelect.value = "Giftcards.com";
 
     const match = cleaned.match(/(\d{4}\s?\d{4}\s?\d{4}\s?\d{4}\s?\d{3})/);
-    if (match) cardNumber.value = match[0].replace(/\s/g, "");
+    if (match) {
+      cardNumber.value = match[0].replace(/\s/g, "");
+    }
 
-    const pin = cleaned.match(/pin[:\s]*([0-9]{4,8})/i);
-    if (pin) code.value = pin[1];
+    let pinMatch = cleaned.match(/pin[:\s]*([0-9]{4,8})/i);
+
+    if (!pinMatch) {
+      pinMatch = cleaned.match(/p.?n[:\s]*([0-9]{4,8})/i);
+    }
+
+    if (!pinMatch) {
+      const possiblePins = cleaned.match(/\b\d{4}\b/g);
+      if (possiblePins) {
+        const filtered = possiblePins.filter(p => !cardNumber.value.includes(p));
+        if (filtered.length > 0) {
+          code.value = filtered[0];
+        }
+      }
+    } else {
+      code.value = pinMatch[1];
+    }
 
     const bal = cleaned.match(/\$?\d+\.\d{2}/);
     if (bal) balance.value = bal[0].replace("$","");
