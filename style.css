@@ -70,12 +70,55 @@ input, select {
   margin-left: 6px;
 }
 
+/* Card row layout */
+.card-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Icon (no logos version) */
+.card-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: #e5e5ea;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+}
+
+/* Text layout */
+.card-info {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Title */
+.title {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+/* Subtitle */
+.subtitle {
+  font-size: 14px;
+  color: #555;
+  margin-top: 2px;
+}
+
+/* Actions */
+.actions {
+  margin-top: 8px;
+}
+
 /* Modal */
 #modal {
   position: fixed;
   top:0; bottom:0; left:0; right:0;
   background: rgba(0,0,0,0.3);
-  display: none;              /* FIXED */
+  display: none;
   align-items: flex-end;
 }
 
@@ -119,6 +162,18 @@ input, select {
   border-top: 1px solid #ddd;
 }
 
+/* ✅ UPDATED TAB BUTTONS */
+.tabbar button {
+  background: none;
+  border: none;
+  font-size: 21px;          /* 75% bigger */
+  padding: 12px 20px;       /* larger tap area */
+  color: #007aff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
 /* Toast */
 #toast {
   position: fixed;
@@ -135,46 +190,4 @@ input, select {
 /* Hidden */
 .hidden {
   display: none;
-}
-/* Row layout */
-.card-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-/* Icon (replaces logos) */
-.card-icon {
-  width: 36px;
-  height: 36px;
-  border-radius: 8px;
-  background: #e5e5ea;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 18px;
-}
-
-/* Text layout */
-.card-info {
-  display: flex;
-  flex-direction: column;
-}
-
-/* Title */
-.title {
-  font-size: 16px;
-  font-weight: 600;
-}
-
-/* Subtitle */
-.subtitle {
-  font-size: 14px;
-  color: #555;
-  margin-top: 2px;
-}
-
-/* Actions spacing */
-.actions {
-  margin-top: 8px;
 }
