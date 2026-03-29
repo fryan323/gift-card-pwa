@@ -124,7 +124,7 @@ function closeForm() {
 
 function saveCard() {
   const card = {
-    id: editingId || crypto.randomUUID(),
+    id: editingId ? editingId : crypto.randomUUID(), // 🔥 critical fix
     retailer: getRetailer(),
     cardNumber: cardNumber.value,
     code: code.value,
@@ -137,13 +137,14 @@ function saveCard() {
     return;
   }
 
-  if (isDuplicate(card, editingId)) {
+  // 🔥 ONLY check duplicates when ADDING
+  if (!editingId && isDuplicate(card)) {
     alert("Duplicate card");
     return;
   }
 
   if (editingId) {
-    cards = cards.map(c=>c.id===editingId?card:c);
+    cards = cards.map(c => c.id === editingId ? card : c);
   } else {
     cards.push(card);
   }
