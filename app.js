@@ -209,4 +209,47 @@ function copyCode(codeValue) {
   showToast("Copied code");
 }
 
+function exportData() {
+  const dataStr = JSON.stringify(cards, null, 2);
+
+  const blob = new Blob([dataStr], { type: "text/plain" });
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "gift-cards-backup.txt";
+  a.click();
+
+  URL.revokeObjectURL(url);
+
+  showToast("Exported cards");
+}
+
+document.getElementById("importFile").addEventListener("change", function(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+
+  reader.onload = function(event) {
+    try {
+      const imported = JSON.parse(event.target.result);
+
+      if (!Array.isArray(imported)) {
+        throw new Error("Invalid format");
+      }
+
+      cards = imported;
+      save();
+      render();
+
+      showToast("Imported cards");
+    } catch (err) {
+      alert("Import failed: invalid file");
+    }
+  };
+
+  reader.readAsText(file);
+});
+
 render();
