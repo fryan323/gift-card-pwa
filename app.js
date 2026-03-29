@@ -198,7 +198,7 @@ function deleteCard(id) {
   render();
 }
 
-/* COPY FUNCTIONS */
+/* COPY */
 function copyCardNumber(number) {
   navigator.clipboard.writeText(number);
   showToast("Copied card number");
@@ -224,7 +224,7 @@ function exportData() {
   showToast("Exported cards");
 }
 
-/* OCR + IMPORT (FIXED) */
+/* DOM READY (OCR + IMPORT) */
 document.addEventListener("DOMContentLoaded", function() {
 
   const photoInput = document.getElementById("photoInput");
@@ -262,7 +262,6 @@ document.addEventListener("DOMContentLoaded", function() {
       reader.onload = function(event) {
         try {
           const imported = JSON.parse(event.target.result);
-
           if (!Array.isArray(imported)) throw new Error();
 
           cards = imported;
@@ -290,14 +289,30 @@ function extractFromText(text) {
   if (lower.includes("lego")) {
     retailerSelect.value = "LEGO";
 
-    const cardMatch = cleaned.match(/(\d{4}\s?\d{4}\s?\d{4}\s?\d{4}\s?\d{3})/);
-    if (cardMatch) cardNumber.value = cardMatch[0].replace(/\s/g, "");
+    const match = cleaned.match(/(\d{4}\s?\d{4}\s?\d{4}\s?\d{4}\s?\d{3})/);
+    if (match) cardNumber.value = match[0].replace(/\s/g, "");
 
-    const pinMatch = cleaned.match(/pin[:\s]*([0-9]{4,8})/i);
-    if (pinMatch) code.value = pinMatch[1];
+    const pin = cleaned.match(/pin[:\s]*([0-9]{4,8})/i);
+    if (pin) code.value = pin[1];
 
-    const balanceMatch = cleaned.match(/\$?\d+\.\d{2}/);
-    if (balanceMatch) balance.value = balanceMatch[0].replace("$","");
+    const bal = cleaned.match(/\$?\d+\.\d{2}/);
+    if (bal) balance.value = bal[0].replace("$","");
+
+    return;
+  }
+
+  // GIFTCARDS.COM
+  if (lower.includes("giftcards.com")) {
+    retailerSelect.value = "Giftcards.com";
+
+    const match = cleaned.match(/(\d{4}\s?\d{4}\s?\d{4}\s?\d{4}\s?\d{3})/);
+    if (match) cardNumber.value = match[0].replace(/\s/g, "");
+
+    const pin = cleaned.match(/pin[:\s]*([0-9]{4,8})/i);
+    if (pin) code.value = pin[1];
+
+    const bal = cleaned.match(/\$?\d+\.\d{2}/);
+    if (bal) balance.value = bal[0].replace("$","");
 
     return;
   }
@@ -306,37 +321,30 @@ function extractFromText(text) {
   if (lower.includes("target")) {
     retailerSelect.value = "Target";
 
-    const cardMatch = cleaned.match(/gift\s*card\s*number[:\s]*([0-9]{12,20})/i);
-    if (cardMatch) cardNumber.value = cardMatch[1];
+    const card = cleaned.match(/gift\s*card\s*number[:\s]*([0-9]{12,20})/i);
+    if (card) cardNumber.value = card[1];
 
-    let accessMatch = cleaned.match(/access\s*number[:\s]*([0-9]{4,12})/i);
-    if (!accessMatch) accessMatch = cleaned.match(/access.*?([0-9]{6,12})/i);
+    const access = cleaned.match(/access.*?([0-9]{6,12})/i);
+    if (access) code.value = access[1];
 
-    if (accessMatch) code.value = accessMatch[1];
-
-    const balanceMatch = cleaned.match(/\$?\d+\.\d{2}/);
-    if (balanceMatch) balance.value = balanceMatch[0].replace("$","");
+    const bal = cleaned.match(/\$?\d+\.\d{2}/);
+    if (bal) balance.value = bal[0].replace("$","");
 
     return;
   }
 
   // KOHLS
-  if (
-    lower.includes("card number") &&
-    lower.includes("pin") &&
-    cleaned.match(/\d{4}\s\d{5}\s\d{5}\s\d{5}/)
-  ) {
+  if (cleaned.match(/\d{4}\s\d{5}\s\d{5}\s\d{5}/)) {
     retailerSelect.value = "Kohls";
-    customRetailer.classList.add("hidden");
 
-    const cardMatch = cleaned.match(/(\d{4}\s\d{5}\s\d{5}\s\d{5})/);
-    if (cardMatch) cardNumber.value = cardMatch[0].replace(/\s/g, "");
+    const match = cleaned.match(/(\d{4}\s\d{5}\s\d{5}\s\d{5})/);
+    if (match) cardNumber.value = match[0].replace(/\s/g, "");
 
-    const pinMatch = cleaned.match(/pin[:\s]*([0-9]{4,8})/i);
-    if (pinMatch) code.value = pinMatch[1];
+    const pin = cleaned.match(/pin[:\s]*([0-9]{4})/i);
+    if (pin) code.value = pin[1];
 
-    const balanceMatch = cleaned.match(/\$?\d+\.\d{2}/);
-    if (balanceMatch) balance.value = balanceMatch[0].replace("$","");
+    const bal = cleaned.match(/\$?\d+\.\d{2}/);
+    if (bal) balance.value = bal[0].replace("$","");
 
     return;
   }
@@ -345,8 +353,8 @@ function extractFromText(text) {
   const numbers = cleaned.match(/\d{8,}/g);
   if (numbers) cardNumber.value = numbers.sort((a,b)=>b.length-a.length)[0];
 
-  const balanceMatch = cleaned.match(/\$?\d+\.\d{2}/);
-  if (balanceMatch) balance.value = balanceMatch[0].replace("$","");
+  const bal = cleaned.match(/\$?\d+\.\d{2}/);
+  if (bal) balance.value = bal[0].replace("$","");
 }
 
 render();
