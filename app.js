@@ -55,7 +55,7 @@ function render() {
   }
 }
 
-/* ✅ FIXED FILTER + SORT */
+/* FILTER + SORT */
 function renderCards() {
   let list = document.getElementById("card-list");
 
@@ -65,12 +65,8 @@ function renderCards() {
 
   let filtered = [...cards].reverse();
 
-  // Hide $0
-  if (hideZero) {
-    filtered = filtered.filter(c => c.balance !== 0);
-  }
+  if (hideZero) filtered = filtered.filter(c => c.balance !== 0);
 
-  // Search
   if (search) {
     filtered = filtered.filter(c =>
       c.retailer.toLowerCase().includes(search) ||
@@ -79,7 +75,6 @@ function renderCards() {
     );
   }
 
-  // Sort
   if (sort === "desc") filtered.sort((a,b)=>b.balance-a.balance);
   if (sort === "asc") filtered.sort((a,b)=>a.balance-b.balance);
   if (sort === "alpha") filtered.sort((a,b)=>a.retailer.localeCompare(b.retailer));
@@ -259,10 +254,11 @@ function exportData() {
   showToast("Exported cards");
 }
 
-/* OCR HANDLER */
+/* OCR + IMPORT HANDLERS */
 document.addEventListener("DOMContentLoaded", function() {
-  const photoInput = document.getElementById("photoInput");
 
+  // OCR
+  const photoInput = document.getElementById("photoInput");
   if (photoInput) {
     photoInput.addEventListener("change", async function(e) {
       const file = e.target.files[0];
@@ -280,9 +276,39 @@ document.addEventListener("DOMContentLoaded", function() {
       }
     });
   }
+
+  // ✅ IMPORT FIX
+  const importInput = document.getElementById("importFile");
+  if (importInput) {
+    importInput.addEventListener("change", function(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+
+      reader.onload = function(event) {
+        try {
+          const imported = JSON.parse(event.target.result);
+
+          if (!Array.isArray(imported)) throw new Error();
+
+          cards = imported;
+          save();
+          render();
+
+          showToast("Imported cards");
+        } catch {
+          alert("Import failed");
+        }
+      };
+
+      reader.readAsText(file);
+    });
+  }
+
 });
 
-/* OCR PARSER */
+/* OCR PARSER (unchanged) */
 function extractFromText(text) {
   const cleaned = text.replace(/\n/g, " ");
   const lower = cleaned.toLowerCase();
