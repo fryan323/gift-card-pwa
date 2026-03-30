@@ -55,10 +55,36 @@ function render() {
   }
 }
 
+/* ✅ FIXED FILTER + SORT */
 function renderCards() {
   let list = document.getElementById("card-list");
 
-  list.innerHTML = cards.slice().reverse().map(c => `
+  let search = document.getElementById("search").value.toLowerCase();
+  let hideZero = document.getElementById("hideZero").checked;
+  let sort = document.getElementById("sort").value;
+
+  let filtered = [...cards].reverse();
+
+  // Hide $0
+  if (hideZero) {
+    filtered = filtered.filter(c => c.balance !== 0);
+  }
+
+  // Search
+  if (search) {
+    filtered = filtered.filter(c =>
+      c.retailer.toLowerCase().includes(search) ||
+      c.cardNumber.includes(search) ||
+      c.code.includes(search)
+    );
+  }
+
+  // Sort
+  if (sort === "desc") filtered.sort((a,b)=>b.balance-a.balance);
+  if (sort === "asc") filtered.sort((a,b)=>a.balance-b.balance);
+  if (sort === "alpha") filtered.sort((a,b)=>a.retailer.localeCompare(b.retailer));
+
+  list.innerHTML = filtered.map(c => `
     <div class="card" data-id="${c.id}">
       <div class="card-row">
 
@@ -246,12 +272,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
       try {
         const result = await Tesseract.recognize(file, 'eng');
-        const text = result.data.text;
-
-        console.log("OCR TEXT:", text);
-
-        extractFromText(text);
-
+        extractFromText(result.data.text);
         showToast("Populated from image");
       } catch (err) {
         console.error(err);
@@ -261,7 +282,7 @@ document.addEventListener("DOMContentLoaded", function() {
   }
 });
 
-/* OCR PARSER (IMPROVED LEGO PIN) */
+/* OCR PARSER */
 function extractFromText(text) {
   const cleaned = text.replace(/\n/g, " ");
   const lower = cleaned.toLowerCase();
@@ -272,11 +293,9 @@ function extractFromText(text) {
     const match = cleaned.match(/(\d{4}\s?\d{4}\s?\d{4}\s?\d{4}\s?\d{3})/);
     if (match) cardNumber.value = match[0].replace(/\s/g, "");
 
-    /* ✅ IMPROVED PIN DETECTION */
     let pinMatch = cleaned.match(/p[\s\W]*[i1l][\s\W]*n[\s:\-]*([0-9]{4,8})/i);
 
     if (!pinMatch) {
-      // fallback: grab last 4-digit number in text
       const fallback = cleaned.match(/([0-9]{4})(?!.*[0-9]{4})/);
       if (fallback) code.value = fallback[1];
     } else {
