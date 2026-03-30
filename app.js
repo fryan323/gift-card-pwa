@@ -21,7 +21,7 @@ function getRetailer() {
   return retailerSelect.value === "Other…" ? customRetailer.value : retailerSelect.value;
 }
 
-/* ✅ DUPLICATE LOGIC (RESTORED) */
+/* DUPLICATE LOGIC */
 function normalize(s) {
   return s.trim().toLowerCase();
 }
@@ -44,8 +44,15 @@ function isDuplicate(card, excludeId=null) {
 }
 
 function render() {
-  if (currentTab === "cards") renderCards();
-  else renderTotals();
+  if (currentTab === "cards") {
+    document.getElementById("card-list").classList.remove("hidden");
+    document.getElementById("totals-view").classList.add("hidden");
+    renderCards();
+  } else {
+    document.getElementById("card-list").classList.add("hidden");
+    document.getElementById("totals-view").classList.remove("hidden");
+    renderTotals();
+  }
 }
 
 function renderCards() {
@@ -94,7 +101,6 @@ function renderTotals() {
 
 function showTab(tab) {
   currentTab = tab;
-  document.getElementById("totals-view").classList.toggle("hidden", tab!=="totals");
   render();
 }
 
@@ -131,7 +137,6 @@ function saveCard() {
     return;
   }
 
-  /* ✅ DUPLICATE CHECK ONLY ON ADD */
   if (!editingId && isDuplicate(card)) {
     alert("Duplicate card");
     return;
@@ -163,7 +168,6 @@ function editCard(id) {
   modal.classList.add("show");
 }
 
-/* DELETE CONFIRMATION */
 function deleteCurrentCard() {
   if (!editingId) return;
 
@@ -231,7 +235,6 @@ function exportData() {
 
 /* OCR HANDLER */
 document.addEventListener("DOMContentLoaded", function() {
-
   const photoInput = document.getElementById("photoInput");
 
   if (photoInput) {
@@ -256,20 +259,30 @@ document.addEventListener("DOMContentLoaded", function() {
       }
     });
   }
-
 });
 
-/* OCR PARSER */
+/* OCR PARSER (IMPROVED LEGO PIN) */
 function extractFromText(text) {
   const cleaned = text.replace(/\n/g, " ");
   const lower = cleaned.toLowerCase();
 
   if (lower.includes("lego")) {
     retailerSelect.value = "LEGO";
+
     const match = cleaned.match(/(\d{4}\s?\d{4}\s?\d{4}\s?\d{4}\s?\d{3})/);
     if (match) cardNumber.value = match[0].replace(/\s/g, "");
-    const pin = cleaned.match(/pin[:\s]*([0-9]{4,8})/i);
-    if (pin) code.value = pin[1];
+
+    /* ✅ IMPROVED PIN DETECTION */
+    let pinMatch = cleaned.match(/p[\s\W]*[i1l][\s\W]*n[\s:\-]*([0-9]{4,8})/i);
+
+    if (!pinMatch) {
+      // fallback: grab last 4-digit number in text
+      const fallback = cleaned.match(/([0-9]{4})(?!.*[0-9]{4})/);
+      if (fallback) code.value = fallback[1];
+    } else {
+      code.value = pinMatch[1];
+    }
+
     const bal = cleaned.match(/\$?\d+\.\d{2}/);
     if (bal) balance.value = bal[0].replace("$","");
     return;
